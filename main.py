@@ -6,6 +6,7 @@ from flask import Flask, request
 
 app = Flask(__name__)
 
+
 @app.route('/', methods=['GET', 'POST'])
 def home():
     conn = sqlite3.connect('my_database.db')
@@ -13,13 +14,16 @@ def home():
 
     if request.method == 'POST':
 
-        transaction = "INSERT INTO messages VALUES ('{}', '{}')".format(
-            request.remote_addr,
-            request.form['content'],
-        )
-        c.execute(transaction)
-        conn.commit()
+        # transaction = "INSERT INTO messages VALUES ('{}', '{}')".format(
+        #     request.remote_addr,
+        #     request.form['content'],
+        # )
+        # c.execute(transaction)
 
+        c.execute("INSERT INTO messages VALUES (:ip, :mess)",
+                  {'ip': request.remote_addr, 'mess': request.form['content']})
+
+        conn.commit()
 
     body = """
 <html>
@@ -35,7 +39,7 @@ def home():
 
 <h2>Messages</h2>
 """
-    
+
     for m in c.execute("SELECT * FROM messages"):
         body += """
 <div class="message">
@@ -45,10 +49,9 @@ def home():
 
     c.close()
 
-    return body 
+    return body
 
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 6779))
     app.run(host='0.0.0.0', port=port)
-
